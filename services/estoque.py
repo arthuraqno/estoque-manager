@@ -56,6 +56,14 @@ class Estoque:
     def deletar_produto(self, produto):
         self.produtos.remove(produto)
         print(f"✅ {produto.nome} removido do estoque!")
+
+    def relatorio_vendas(self):
+        if not self.vendas:
+            print("Nenhuma venda realizada!")
+            return
+        total = sum(venda.preco_total for venda in self.vendas)
+        print(f"Total de vendas: {len(self.vendas)}")
+        print(f"Valor total: R${total:.2f}")
     
     def salvar_dados(self):
         with open("data/vendas.json", "w") as f:
