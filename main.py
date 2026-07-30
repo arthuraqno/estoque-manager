@@ -5,7 +5,6 @@ from models.venda import Venda
 from services.estoque import Estoque
 
 estoque = Estoque()
-estoque.carregar_dados()
 
 def menu():
     while True:
@@ -30,13 +29,11 @@ def menu():
             categoria = input("Categoria (equipamento/suplemento): ").lower()
             if categoria == "equipamento":
                 tamanho = input("Tamanho (A0/A1/A2/A3/A4): ")
-                produto = Equipamento(nome, preco, quantidade, categoria, tamanho)
-                estoque.cadastrar_equipamento(produto)
+                estoque.cadastrar_equipamento(nome, preco, quantidade, categoria, tamanho)
             else:
                 sabor = input("Sabor: ")
                 data_validade = input("Data de validade (AAAA-MM-DD): ")
-                produto = Suplemento(nome, preco, quantidade, categoria, sabor, data_validade)
-                estoque.cadastrar_suplemento(produto)
+                estoque.cadastrar_suplemento(nome, preco, quantidade, categoria, sabor, data_validade)
 
         elif opcao == "2":
             nome = input("Nome do produto: ")
@@ -45,7 +42,7 @@ def menu():
                 print(" Produto não encontrado.")
             else:
                 quantidade = int(input("Quantidade: "))
-                estoque.realizar_venda(produto, quantidade)
+                estoque.realizar_venda(nome, quantidade)
 
         elif opcao == "3":
             nome = input("Nome do produto: ")
@@ -54,7 +51,7 @@ def menu():
                 print(" Produto não encontrado.")
             else:
                 quantidade = int(input("Quantidade a repor: "))
-                estoque.repor_estoque(produto, quantidade)
+                estoque.repor_estoque(nome, quantidade)
 
         elif opcao == "4":
             nome = input("Nome do produto: ")
@@ -62,7 +59,7 @@ def menu():
             if produto is None:
                 print(" Produto não encontrado.")
             else:
-                estoque.deletar_produto(produto)
+                estoque.deletar_produto(nome)
 
         elif opcao == "5":
             estoque.listar_produtos()
@@ -71,7 +68,6 @@ def menu():
             estoque.listar_vendas()
 
         elif opcao == "7":
-            estoque.salvar_dados()
             print("Encerrando o sistema. Até logo!")
             break
 

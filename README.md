@@ -9,39 +9,40 @@ Sistema de gerenciamento de estoque para loja de Jiu-Jitsu, desenvolvido em Pyth
 - Repor estoque de produtos
 - Deletar produtos
 - Listar produtos e histórico de vendas
-- Dados persistidos em JSON
+- Dados persistidos em banco de dados PostgreSQL
 
 ## 📁 Estrutura do Projeto
+
 estoque-manager/
 ├── main.py
+├── base.py
+├── database.py
 ├── models/
-│   ├── produto.py
-│   ├── equipamento.py
-│   ├── suplemento.py
-│   └── venda.py
-├── services/
-│   └── estoque.py
-└── data/
-├── produtos.json
-└── vendas.json
+│ ├── produto.py
+│ ├── equipamento.py
+│ ├── suplemento.py
+│ └── venda.py
+└── services/
+└── estoque.py
+
 
 ## ▶️ Como rodar
 
-```bash
-cd estoque-manager
-python main.py
-```
+1. Crie um banco de dados PostgreSQL chamado `estoque_db`
+2. Configure a conexão em `database.py` com seu usuário e senha
+3. Execute `python database.py` para criar as tabelas
+4. Execute `python main.py` para iniciar o sistema
 
 ## 🛠️ Tecnologias
 
 - Python 3.14
-- JSON para persistência de dados
-- Orientação a objetos com herança
+- PostgreSQL
+- SQLAlchemy (ORM)
+- psycopg2
 
 ## 📚 Conceitos aplicados
 
-- Herança e classes abstratas
-- Encapsulamento
-- Type hints
-- Persistência de dados com JSON
+- Herança e polimorfismo com SQLAlchemy
+- Mapeamento objeto-relacional (ORM)
+- Banco de dados relacional com PostgreSQL
 - Menus interativos no terminal

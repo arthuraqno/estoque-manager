@@ -1,99 +1,103 @@
+from sqlalchemy.orm import Session
 from models.equipamento import Equipamento
-from models.produto import Produto
 from models.suplemento import Suplemento
 from models.venda import Venda
-import json
+from models.produto import Produto
+from database import engine
 
-class Estoque: 
-    def __init__(self):
-        self.produtos = []
-        self.vendas = []
+class Estoque:
+    def cadastrar_equipamento(self, nome, preco, quantidade, categoria, tamanho):
+        with Session(engine) as session:
+            equipamento = Equipamento(nome = nome, 
+                                      preco = preco,
+                                      quantidade = quantidade,
+                                      categoria = categoria, 
+                                      tamanho = tamanho)
+            session.add(equipamento)
+            session.commit()
+            print(f"{nome} adcionado ao estoque") 
 
-    def cadastrar_equipamento(self, equipamento: Equipamento):
-        self.produtos.append(equipamento)
-        print (f"{equipamento.nome} adcionado ao estoque")
-
-    def cadastrar_suplemento(self, suplemento: Suplemento):
-        self.produtos.append(suplemento)
-        print (f"{suplemento.nome} adcionado ao estoque")
+    def cadastrar_suplemento(self, nome, preco, quantidade, categoria, sabor, data_validade):
+        with Session(engine) as session:
+            suplemento = Suplemento(nome = nome, 
+                                    preco = preco,
+                                    quantidade = quantidade,
+                                    categoria = categoria, 
+                                    sabor = sabor,
+                                    data_validade = data_validade)
+            session.add(suplemento)
+            session.commit()
+            print(f"{nome} adcionado ao estoque")
 
     def listar_produtos(self):
-        if not self.produtos:
-            print("Nenhum produto cadastrato!")
-            return
-        for produtos in self.produtos:
-            print(f"Produtos disponíveis:\n{produtos}")
+        with Session(engine) as session:
+            produtos = session.query(Produto).all()
+            if produtos:
+                for produto in produtos:
+                    print(produto)
+            else:
+                print("Não ha produtos cadastrados!")
 
-    def realizar_venda(self, produto, quantidade: int):
-        if produto not in self.produtos:
-            print("O produto não está disponível!")
-            return
-        elif produto.quantidade < quantidade:
-            print("Não ha quantidade disponível para venda")
-        else:
-            venda = Venda(produto, quantidade)
+    def buscar_produto(self, nome):
+        with Session(engine) as session:
+            produto = session.query(Produto).filter(Produto.nome.ilike(nome)).first()
+            return produto
+
+    def realizar_venda(self, nome, quantidade):
+        with Session(engine) as session:
+            produto = session.query(Produto).filter(Produto.nome.ilike(nome)).first()
+            if produto is None:
+                print("Produto não encontrado!")
+                return
+            if produto.quantidade < quantidade:
+                print("Quantidade insuficiente!")
+                return
+
             produto.quantidade -= quantidade
-            self.vendas.append(venda)
-            print(f"Venda realizada com sucesso! Total: R${venda.preco_total}")
+            venda = Venda(produto_id = produto.id, 
+                          quantidade = quantidade, 
+                          preco_total = produto.preco * quantidade)
+            session.add(venda)
+            session.commit()
+            print(f"Venda realizada! Total: R${venda.preco_total}")
+
+
+    def repor_estoque(self, nome, quantidade):
+        with Session(engine) as session:
+            produto = session.query(Produto).filter(Produto.nome.ilike(nome)).first()
+            if produto is None:
+                print("Produto não encontrado!")
+                return
+            
+            produto.quantidade += quantidade
+            session.commit()
+            print("Produto adcionado com sucesso")
+
+    def deletar_produto(self, nome):
+        with Session(engine) as session:
+            produto = session.query(Produto).filter(Produto.nome.ilike(nome)).first()
+            if produto is None:
+                print("❌ Produto não encontrado!")
+                return
+            session.delete(produto)
+            session.commit()
+            print(f"{produto.nome} removido do estoque!")
 
     def listar_vendas(self):
-        if not self.vendas:
-            print("Nenhuma venda foi realizada!")
-            return
-        for vendas in self.vendas:
-            print(vendas)
-
-    def repor_estoque(self, produto, quantidade: int):
-        produto.quantidade += quantidade
-        print(f"Estoque reposto! {produto.nome} agora tem {produto.quantidade} unidades")
-
-    def buscar_produto(self, nome: str):
-        for produto in self.produtos:
-            if produto.nome.lower() == nome.lower():
-                return produto
-        return None
-    
-    def deletar_produto(self, produto):
-        self.produtos.remove(produto)
-        print(f"✅ {produto.nome} removido do estoque!")
+        with Session(engine) as session:
+            vendas = session.query(Venda).all()
+            if vendas:
+                for venda in vendas:
+                    print(venda)
+            else:
+                print("0 vendas registradas!") 
 
     def relatorio_vendas(self):
-        if not self.vendas:
-            print("Nenhuma venda realizada!")
-            return
-        total = sum(venda.preco_total for venda in self.vendas)
-        print(f"Total de vendas: {len(self.vendas)}")
-        print(f"Valor total: R${total:.2f}")
-    
-    def salvar_dados(self):
-        with open("data/vendas.json", "w") as f:
-            json.dump([venda.to_dict() for venda in self.vendas], f, indent=4)
-
-        with open("data/produtos.json", "w") as f:
-            json.dump([produto.to_dict() for produto in self.produtos], f, indent=4)
-
-    def carregar_dados(self):
-        try:
-            with open("data/produtos.json", "r") as f:
-                produtos = json.load(f)
-                for p in produtos:
-                    if p["categoria"] == "equipamento":
-                        produto = Equipamento(p["nome"], p["preco"], p["quantidade"], p["categoria"], p["tamanho"])
-                    else:
-                        produto = Suplemento(p["nome"], p["preco"], p["quantidade"], p["categoria"], p["sabor"], p["data_validade"])
-                    produto.codigo = p["codigo"]
-                    Produto.codigos_usados.append(p["codigo"])
-                    self.produtos.append(produto)
-        except (FileNotFoundError, ValueError):
-            pass
-
-        try:
-            with open("data/vendas.json", "r") as f:
-                vendas = json.load(f)
-                for v in vendas:
-                    produto = self.buscar_produto(v["produto"])
-                    if produto:
-                        venda = Venda(produto, v["quantidade"])
-                        self.vendas.append(venda)
-        except (FileNotFoundError, ValueError):
-            pass
+        with Session(engine) as session:
+            vendas = session.query(Venda).all()
+            if not vendas:
+                print("Nenhuma venda realizada!")
+                return
+            total = sum(float(venda.preco_total)for venda in vendas)
+            print(f"Total de vendas:{len(vendas)}")
+            print(f"Valor total: R${total:.2f}")
